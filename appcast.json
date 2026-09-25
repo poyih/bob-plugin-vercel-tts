@@ -1,0 +1,13 @@
+{
+  "identifier": "com.poyih.bob.plugin.vercel.tts",
+  "versions": [
+    {
+      "version": "1.0.0",
+      "desc": "首个版本：接入 Vercel AI Gateway 全部 8 个 TTS 模型（OpenAI TTS-1 / TTS-1 HD、Gemini 3.8 Flash / Flash-Lite TTS、Grok TTS、Fish Audio S1 / S2 Pro / S2.1 Pro），按模型家族门控音色、音频格式、语速与语音指令，支持自定义模型 ID 与音色",
+      "sha256": "ac68f23937c6941eca7089d5c8db10e042b9cfeded618475bd82d59b8b493d3e",
+      "url": "https://github.com/poyih/bob-plugin-vercel-tts/releases/download/v1.0.0/bob-plugin-vercel-tts-1.0.0.bobplugin",
+      "minBobVersion": "1.8.0",
+      "timestamp": 1790317867404
+    }
+  ]
+}
