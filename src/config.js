@@ -83,7 +83,8 @@ var FAMILIES = {
         defaultVoice: PROVIDER_DEFAULT_VOICE,
         defaultFormat: "mp3",
         formats: ["mp3", "wav", "pcm", "opus"],
-        speed: false,
+        // AI SDK 将 speed 映射为 Fish Audio prosody.speed（0.5~2）
+        speed: true,
         instructions: false,
         language: false,
         charLimit: 8000

@@ -353,17 +353,37 @@ function ensureLinkVisible(err) {
 // ---------------------------------------------------------------- 响应解析
 
 var BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-var BASE64_RE = /^[A-Za-z0-9+\/]+={0,2}$/;
+var BASE64_INVALID_RE = /[^A-Za-z0-9+\/=]/;
 
-// 去掉空白和 data: URI 前缀，校验字符集；不合法返回空串
+// 去掉空白和 data: URI 前缀；验证 padding 与未使用尾位，合法的未填充编码补齐后返回。
 function normalizeBase64(value) {
     var str = String(value || "").replace(/\s+/g, "");
     if (str.indexOf("data:") === 0) {
         var comma = str.indexOf(",");
         str = comma === -1 ? "" : str.slice(comma + 1);
     }
-    if (!str || str.length % 4 === 1 || !BASE64_RE.test(str)) {
+    if (!str || BASE64_INVALID_RE.test(str)) {
         return "";
+    }
+    var firstPadding = str.indexOf("=");
+    var dataLength = firstPadding === -1 ? str.length : firstPadding;
+    var paddingLength = str.length - dataLength;
+    var remainder = dataLength % 4;
+    if (remainder === 1 || paddingLength > 2) {
+        return "";
+    }
+    if (paddingLength && (str.length % 4 !== 0 ||
+        (paddingLength === 2 && str.charAt(str.length - 1) !== "="))) {
+        return "";
+    }
+    // 一个余字节只能用最后一个 sextet 的高 2 位，两个余字节只能用高 4 位。
+    var last = BASE64_CHARS.indexOf(str.charAt(dataLength - 1));
+    if ((remainder === 2 && (last & 15) !== 0) ||
+        (remainder === 3 && (last & 3) !== 0)) {
+        return "";
+    }
+    if (!paddingLength && remainder) {
+        return str + (remainder === 2 ? "==" : "=");
     }
     return str;
 }

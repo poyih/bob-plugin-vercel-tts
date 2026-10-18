@@ -294,13 +294,13 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     await speak(EN);
     ok(lastRequest.body.voice === "eve", "旧前缀 xai/ 也识别为 Grok 家族");
 
-    // 7. Fish Audio（含 Drama 3）：默认不发 voice；菜单 reference ID；不发 speed / instructions
+    // 7. Fish Audio（含 Drama 3）：默认不发 voice；菜单 reference ID；发送 speed，丢弃 instructions
     withOptions({ model: "fish-audio/s2.1-pro", speed: "1.5" });
     nextResponse = audioResponse();
     await speak(EN);
     ok(lastRequest.body.voice === undefined && lastRequest.body.outputFormat === "mp3",
         "Fish Audio 默认音色不发 voice，格式 mp3");
-    ok(lastRequest.body.speed === undefined, "Fish Audio 不发 speed");
+    ok(lastRequest.body.speed === 1.5, "Fish Audio S2.1 Pro 发送 speed（数字）");
     withOptions({ model: "fish-audio/drama-3", speed: "1.25", instructions: "sad" });
     nextResponse = audioResponse();
     logs = [];
@@ -308,14 +308,23 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     ok(lastRequest.header["ai-model-id"] === "fish-audio/drama-3" &&
         lastRequest.body.voice === undefined &&
         lastRequest.body.outputFormat === "mp3" &&
-        lastRequest.body.speed === undefined &&
+        lastRequest.body.speed === 1.25 &&
         lastRequest.body.instructions === undefined &&
-        loggedLine("speed,instructions"),
-        "Fish Audio Drama 3 识别为 fish 家族并门控 speed / instructions");
-    withOptions({ model: "fish-audio/s1", voiceFish: "7f92f8afb8ec43bf81429cc1c9199cb1" });
+        loggedLine("参数丢弃（fish-audio/drama-3 不支持）：instructions"),
+        "Fish Audio Drama 3 发送 speed，丢弃 instructions");
+    withOptions({ model: "fish-audio/s1", voiceFish: "7f92f8afb8ec43bf81429cc1c9199cb1", speed: "0.75" });
     nextResponse = audioResponse();
     await speak(EN);
     ok(lastRequest.body.voice === "7f92f8afb8ec43bf81429cc1c9199cb1", "Fish Audio 菜单里的 reference ID 作为 voice");
+    ok(lastRequest.body.speed === 0.75, "Fish Audio S1 发送 speed（数字）");
+    withOptions({ model: "fish-audio/s2-pro", speed: "1.1" });
+    nextResponse = audioResponse();
+    await speak(EN);
+    ok(lastRequest.body.speed === 1.1, "Fish Audio S2 Pro 发送 speed（数字）");
+    withOptions({ model: "fish-audio/drama-3", speed: "1.0" });
+    nextResponse = audioResponse();
+    await speak(EN);
+    ok(lastRequest.body.speed === undefined, "Fish Audio 1.0 倍速不发送 speed");
 
     // 7b. Microsoft MAI-Voice 家族：默认按语言自动选音色（发 language 不发 voice）；显式选音色则发 voice 不发 language
     withOptions({ model: "microsoft/mai-voice-2.1-flash", speed: "1.25", instructions: "cheerful" });
@@ -493,6 +502,35 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     nextResponse = jsonResponse(200, { audio: "" });
     r = await speak(EN);
     ok(r.error && r.error.type === "api", "空音频报错");
+
+    // Base64 可省略整个 padding，但已有 padding 必须完整且尾部未使用位为零。
+    var onePadAudio = base64([0x49, 0x44, 0x33, 0x00, 0x00]);
+    var validBase64 = [
+        { audio: MP3_B64, expected: MP3_B64, label: "合法双 padding" },
+        { audio: onePadAudio, expected: onePadAudio, label: "合法单 padding" },
+        { audio: RAW_MPEG_B64, expected: RAW_MPEG_B64, label: "完整三字节分组无 padding" },
+        { audio: MP3_B64.slice(0, -2), expected: MP3_B64, label: "省略双 padding 时补齐" },
+        { audio: onePadAudio.slice(0, -1), expected: onePadAudio, label: "省略单 padding 时补齐" },
+        { audio: " \n" + MP3_B64.slice(0, 8) + "\t" + MP3_B64.slice(8) + "\r\n", expected: MP3_B64, label: "忽略音频中的空白" },
+        { audio: "data:audio/mpeg;base64,\n" + onePadAudio.slice(0, -1) + " ", expected: onePadAudio, label: "data URI 可带空白与未填充音频" }
+    ];
+    for (var i = 0; i < validBase64.length; i++) {
+        var valid = validBase64[i];
+        nextResponse = jsonResponse(200, { audio: valid.audio });
+        r = await speak(EN);
+        ok(r.result && r.result.value === valid.expected, valid.label);
+    }
+    var invalidBase64 = ["A", "AAAA==", "AA=", "AA===", "=AAA", "AA=A", "AAAA=", "AB==", "AAB=", "AB", "AAB", "===="];
+    for (var j = 0; j < invalidBase64.length; j++) {
+        nextResponse = jsonResponse(200, { audio: invalidBase64[j] });
+        r = await speak(EN);
+        ok(r.error && r.error.type === "api", "拒绝损坏的 base64：" + invalidBase64[j]);
+    }
+    var largeAudio = RAW_MPEG_B64 + new Array(262145).join("AAAA");
+    nextResponse = jsonResponse(200, { audio: largeAudio });
+    r = await speak(EN);
+    ok(r.result && r.result.value === largeAudio, "超过 1 MB 的 base64 可正常校验");
+
     nextResponse = jsonResponse(200, { audio: "data:audio/mpeg;base64," + MP3_B64 });
     r = await speak(EN);
     ok(r.result && r.result.value === MP3_B64, "data: URI 前缀被剥掉");
@@ -558,6 +596,9 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     nextResponse = textResponse(200, "<html>gateway</html>", "text/html");
     v = await validate();
     ok(v.result === false && v.error && v.error.type === "api", "pluginValidate 不把 2xx HTML 误判为可用");
+    nextResponse = jsonResponse(200, { audio: MP3_B64.slice(0, -3) + "B==" });
+    v = await validate();
+    ok(v.result === false && v.error && v.error.type === "api", "pluginValidate 拒绝有音频头但尾位损坏的 base64");
     nextResponse = { response: null, data: null };
     v = await validate();
     ok(v.result === false && v.error && v.error.type === "network", "pluginValidate 缺失响应时报 network");

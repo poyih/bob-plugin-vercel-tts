@@ -1,6 +1,6 @@
 {
     "identifier": "com.poyih.bob.plugin.vercel.tts",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "category": "tts",
     "name": "Vercel AI Gateway 语音合成",
     "summary": "通过 Vercel AI Gateway 一个 Key 调用 OpenAI、Gemini、Microsoft MAI、Grok、Fish Audio 的 TTS 模型朗读文本。",
@@ -72,7 +72,7 @@
                     "value": "microsoft/mai-voice-2"
                 },
                 {
-                    "title": "Grok TTS (xAI) — 5 个音色，支持语速与指定语言 ($15/M)",
+                    "title": "Grok TTS (xAI) — 28 个音色，支持语速与指定语言 ($15/M)",
                     "value": "spacexai/grok-tts"
                 },
                 {
@@ -408,7 +408,7 @@
             "type": "menu",
             "title": "音色 · Grok",
             "defaultValue": "eve",
-            "desc": "用于 spacexai/grok-tts。",
+            "desc": "用于 spacexai/grok-tts，内置 28 个音色；均可朗读支持的语言。",
             "menuValues": [
                 {
                     "title": "eve — 女声，活力、明快（默认）",
@@ -429,6 +429,98 @@
                 {
                     "title": "leo — 男声，有力、权威",
                     "value": "leo"
+                },
+                {
+                    "title": "carina — 柔和、体贴",
+                    "value": "carina"
+                },
+                {
+                    "title": "zagan — 有力、戏剧感",
+                    "value": "zagan"
+                },
+                {
+                    "title": "helix — 大胆、动感",
+                    "value": "helix"
+                },
+                {
+                    "title": "orion — 浑厚、共鸣感",
+                    "value": "orion"
+                },
+                {
+                    "title": "luna — 温柔、耐心",
+                    "value": "luna"
+                },
+                {
+                    "title": "iris — 友好、欢快",
+                    "value": "iris"
+                },
+                {
+                    "title": "altair — 优雅、精致",
+                    "value": "altair"
+                },
+                {
+                    "title": "zenith — 干练、专注",
+                    "value": "zenith"
+                },
+                {
+                    "title": "perseus — 坚定、自信",
+                    "value": "perseus"
+                },
+                {
+                    "title": "helios — 欢快、活力",
+                    "value": "helios"
+                },
+                {
+                    "title": "lux — 沉稳、平静",
+                    "value": "lux"
+                },
+                {
+                    "title": "kepler — 新颖、有感染力",
+                    "value": "kepler"
+                },
+                {
+                    "title": "rigel — 专业、从容（澳大利亚口音）",
+                    "value": "rigel"
+                },
+                {
+                    "title": "cosmo — 明快、好奇",
+                    "value": "cosmo"
+                },
+                {
+                    "title": "celeste — 体贴、可靠",
+                    "value": "celeste"
+                },
+                {
+                    "title": "ursa — 温暖、坚定",
+                    "value": "ursa"
+                },
+                {
+                    "title": "sirius — 机敏、俏皮",
+                    "value": "sirius"
+                },
+                {
+                    "title": "lumen — 温暖、清晰",
+                    "value": "lumen"
+                },
+                {
+                    "title": "castor — 亲切、随和",
+                    "value": "castor"
+                },
+                {
+                    "title": "naksh — 温暖、深思（印度口音）",
+                    "value": "naksh"
+                },
+                {
+                    "title": "atlas — 自信、有气势",
+                    "value": "atlas"
+                },
+                {
+                    "title": "aurora — 平和、稳定",
+                    "value": "aurora"
+                },
+                {
+                    "title": "liora — 平静、沉稳",
+                    "value": "liora"
                 }
             ]
         },
@@ -490,7 +582,7 @@
             "type": "menu",
             "title": "语速",
             "defaultValue": "1.0",
-            "desc": "仅在非 1.0 时发送。OpenAI、Microsoft MAI 与 Grok 支持；Gemini 与 Fish Audio 不支持，插件不会发送——Gemini 可改用下方语音指令控制语速。",
+            "desc": "仅在非 1.0 时发送。OpenAI、Microsoft MAI、Grok 与 Fish Audio 支持；Gemini 不支持，插件不会发送，可改用下方语音指令控制语速。",
             "menuValues": [
                 {
                     "title": "0.75 倍 — 慢",

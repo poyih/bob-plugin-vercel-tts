@@ -14,7 +14,7 @@
 
 **模型列表过期也不影响使用。** 除了内置菜单，还有自定义模型 ID 和自定义音色输入框，优先级更高——目录里刚上架的模型、fish.audio 音色库的任意 reference ID 都能直接填。`make sync` 能从网关公开目录同步模型菜单，不需要 Key。
 
-**可测试、可发布。** `make test` 用 macOS 自带的 jsc——也就是 Bob 跑插件的同一个 JavaScriptCore——桩掉 `$http` / `$option` / `$log` 跑 90 多个用例，不联网、不消耗额度。工具链只用 Makefile 和标准库 Python，无需 Node。
+**可测试、可发布。** `make test` 用 macOS 自带的 jsc——也就是 Bob 跑插件的同一个 JavaScriptCore——桩掉 `$http` / `$option` / `$log` 跑 100 多项检查，不联网、不消耗额度。工具链只用 Makefile 和标准库 Python，无需 Node。
 
 ## 安装
 
@@ -37,7 +37,7 @@ make install
 | 音色 · OpenAI / Gemini / Microsoft MAI / Grok / Fish Audio | 五个家族各一个菜单。Bob 的设置项是静态显示的，五个菜单会同时出现，插件只读当前模型家族那一个 |
 | 自定义音色 | 填了就优先生效，覆盖所有音色菜单。OpenAI / Grok 填音色名，Gemini 填 `Kore` 这类名称，Microsoft 填 `en-US-Harper` 这类 ID，Fish Audio 填 32 位 reference ID |
 | 音频格式 | 默认「自动」：OpenAI / Microsoft / Grok / Fish Audio 用 mp3，Gemini 用 wav。也可强制 mp3 / wav（Gemini 选 mp3 会被改成 wav） |
-| 语速 | 仅在非 1.0 时发送；OpenAI、Microsoft MAI 与 Grok 支持，Gemini 与 Fish Audio 不支持（插件不发送） |
+| 语速 | 仅在非 1.0 时发送；OpenAI、Microsoft MAI、Grok 与 Fish Audio 支持，Gemini 不支持（插件不发送）。Fish Audio 支持 0.5–2 倍速，现有菜单提供 0.75–1.5 倍速 |
 | 语音指令 | 控制语气 / 情绪 / 节奏，不会被朗读。Gemini 支持；OpenAI tts-1 / tts-1-hd、Microsoft MAI、Grok、Fish Audio 不支持（插件不发送）。Grok 与 Fish Audio 可直接在待朗读文本里写行内标签 |
 
 ## 模型与音色
@@ -52,11 +52,11 @@ make install
 | Microsoft MAI-Voice 2.1 | `microsoft/mai-voice-2.1` | 音色 · Microsoft MAI | mp3 | ✓ | ✗ | $22 / 百万字符 |
 | Microsoft MAI-Voice 2 Flash | `microsoft/mai-voice-2-flash` | 音色 · Microsoft MAI | mp3 | ✓ | ✗ | $15 / 百万字符 |
 | Microsoft MAI-Voice 2 | `microsoft/mai-voice-2` | 音色 · Microsoft MAI | mp3 | ✓ | ✗ | $22 / 百万字符 |
-| Grok TTS | `spacexai/grok-tts` | 音色 · Grok（5 个） | mp3 | ✓（0.7~1.5） | ✗，用文本里的行内标签 | $15 / 百万字符 |
-| Fish Audio Drama 3 | `fish-audio/drama-3` | 音色 · Fish Audio | mp3 | ✗ | ✗，支持 `[语气]` 与 `<whisper>` 行内标签 | $10 / 百万字符 |
-| Fish Audio S2.1 Pro | `fish-audio/s2.1-pro` | 音色 · Fish Audio | mp3 | ✗ | ✗，S2 系列用行内标签 | $15 / 百万字符 |
-| Fish Audio S2 Pro | `fish-audio/s2-pro` | 音色 · Fish Audio | mp3 | ✗ | ✗ | $15 / 百万字符 |
-| Fish Audio S1 | `fish-audio/s1` | 音色 · Fish Audio | mp3 | ✗ | ✗，用情绪 / 音效标记 | $15 / 百万字符 |
+| Grok TTS | `spacexai/grok-tts` | 音色 · Grok（28 个） | mp3 | ✓（0.7~1.5） | ✗，用文本里的行内标签 | $15 / 百万字符 |
+| Fish Audio Drama 3 | `fish-audio/drama-3` | 音色 · Fish Audio | mp3 | ✓（0.5–2） | ✗，支持 `[语气]` 与 `<whisper>` 行内标签 | $10 / 百万字符 |
+| Fish Audio S2.1 Pro | `fish-audio/s2.1-pro` | 音色 · Fish Audio | mp3 | ✓（0.5–2） | ✗，S2 系列用行内标签 | $15 / 百万字符 |
+| Fish Audio S2 Pro | `fish-audio/s2-pro` | 音色 · Fish Audio | mp3 | ✓（0.5–2） | ✗ | $15 / 百万字符 |
+| Fish Audio S1 | `fish-audio/s1` | 音色 · Fish Audio | mp3 | ✓（0.5–2） | ✗，用情绪 / 音效标记 | $15 / 百万字符 |
 
 家族按模型 ID 识别：`openai/` → OpenAI；`google/` 或含 `gemini` → Gemini；`microsoft/` 或含 `mai-voice` → Microsoft MAI；`spacexai/`、`xai/` 或含 `grok` → Grok；`fish-audio/` 或含 `fish` → Fish Audio；其余视为自定义家族——不发 voice 与 outputFormat（除非你在自定义音色 / 音频格式里明确填了），speed 与 instructions 照发，让网关的 warnings 说话。
 
@@ -73,7 +73,7 @@ Grok 只在 Bob 语言能映射到其 `language` 列表（zh / en / ja / ko / fr
 | 请先在插件设置里填写 Vercel AI Gateway API Key | Key 为空 |
 | AI Gateway 认证失败，请检查 API Key | HTTP 401 / `authentication_error`：Key 填错、已撤销，或创建它的成员已离开团队（Vercel 会停用其 Key） |
 | 当前 API Key 或团队无权访问该资源 | HTTP 403：多半是团队尚未被放开 TTS beta |
-| 模型 xxx 不存在或不可用 | HTTP 404：模型 ID 写错，或 TTS 模型还没出现在你团队的目录里。用 `make sync -- --dry-run` 可以看当前目录 |
+| 模型 xxx 不存在或不可用 | HTTP 404：模型 ID 写错，或 TTS 模型还没出现在你团队的目录里。用 `make sync SYNC_ARGS=--dry-run` 可以看当前目录 |
 | AI Gateway 额度不足或超出预算 | HTTP 402 或错误码含 credit / budget：去 AI Gateway 控制台充值或调整 Key 预算 |
 | 请求被网关拒绝 | HTTP 400 / 422，后面会带网关原文，常见是音色名不属于当前模型 |
 | 请求过于频繁或超出速率限制 | HTTP 429 |
@@ -121,6 +121,8 @@ scripts/
 
 - [AI Gateway Text to Speech](https://vercel.com/docs/ai-gateway/modalities/text-to-speech)：端点、请求头、请求体与响应格式
 - [AI Gateway 模型目录 · TTS](https://vercel.com/ai-gateway/models?q=tts)
+- [AI SDK · Fish Audio](https://ai-sdk.dev/providers/ai-sdk-providers/fish-audio)：语速、音频格式与参数支持
+- [xAI Text to Speech](https://docs.x.ai/developers/model-capabilities/audio/text-to-speech#voices)：Grok 音色与语速
 - [Bob 插件文档 · 语音合成](https://bobtranslate.com/plugin/quickstart/tts.html)
 
 ## License
