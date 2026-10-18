@@ -40,7 +40,7 @@ def main() -> int:
     if not bundle.is_file():
         print(f"找不到包：{bundle}，请先 make pack", file=sys.stderr)
         return 1
-    if version not in bundle.name:
+    if f"-{version}." not in bundle.name:
         print(f"包名 {bundle.name} 与 src/info.json 的版本 {version} 不一致", file=sys.stderr)
         return 1
 

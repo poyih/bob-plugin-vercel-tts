@@ -1,14 +1,14 @@
 # Vercel AI Gateway 语音合成 · Bob 插件
 
-给 [Bob](https://bobtranslate.com) 用的 TTS 插件，通过 [Vercel AI Gateway](https://vercel.com/ai-gateway) 一个 Key 调用目录里全部语音合成模型：OpenAI TTS-1 / TTS-1 HD、Gemini 3.8 Flash / Flash-Lite TTS、Grok TTS、Fish Audio S1 / S2 Pro / S2.1 Pro。划词之后直接用 AI 语音朗读。
+给 [Bob](https://bobtranslate.com) 用的 TTS 插件，通过 [Vercel AI Gateway](https://vercel.com/ai-gateway) 一个 Key 调用目录里全部 13 个语音合成模型：OpenAI TTS-1 / TTS-1 HD、Gemini 3.8 Flash / Flash-Lite TTS、Microsoft MAI-Voice 2.1 / 2.1 Flash / 2 / 2 Flash、Grok TTS、Fish Audio Drama 3 / S2.1 Pro / S2 Pro / S1。划词之后直接用 AI 语音朗读。
 
 > 语音合成在 AI Gateway 上仍是 beta，官方说明「access is rolling out gradually」。如果验证时报 403 / 404，多半是你的团队还没被放开，而不是插件配置有误。
 
 ## 特点
 
-**一个 Key 换着用八个模型。** 网关的 speech 端点不是 OpenAI 兼容的 `/v1/audio/speech`，而是 AI SDK 的 speech-model 协议：模型放在 `ai-model-id` 请求头，音频以 base64 放在 JSON 的 `audio` 字段。插件封装了这套协议，切模型只需要换菜单。
+**一个 Key 换着用十三个模型。** 网关的 speech 端点不是 OpenAI 兼容的 `/v1/audio/speech`，而是 AI SDK 的 speech-model 协议：模型放在 `ai-model-id` 请求头，音频以 base64 放在 JSON 的 `audio` 字段。插件封装了这套协议，切模型只需要换菜单。
 
-**按模型家族门控参数。** Gemini 不支持 mp3 / speed / language，OpenAI tts-1 不接受 instructions，Grok 的 language 只认固定列表——插件按模型 ID 前缀识别家族，只发确实支持的字段，其余丢弃并写日志，不让请求带着注定被拒绝的参数出去。网关自己返回的 `warnings` 也会记进日志。
+**按模型家族门控参数。** Gemini 不支持 mp3 / speed / language，OpenAI tts-1 与 Microsoft MAI 不接受 instructions，Grok 的 language 只认固定列表，Microsoft MAI 在未固定音色时靠 language 自动匹配对应语种默认音色（如中 Mei / 英 Harper）而固定音色后不再传冲突的 language——插件按模型 ID 前缀识别家族，只发确实支持的字段，其余丢弃并写日志，不让请求带着注定被拒绝或告警的参数出去。网关自己返回的 `warnings` 也会记进日志。
 
 **错误不会被吞掉。** 失败时网关返回的是 JSON，不检查状态码就直接播放，表现是「点了没声音也没报错」。这里把 HTTP 状态码和 `error.type` 一起映射成 Bob 的错误类型：Key 无效、额度不足、模型不存在 / 团队未开放、参数被拒、限流，各报各的；2xx 但不是 `{ audio }` 形态（代理返回 HTML、字段改名、音频为空）同样报错。返回的音频还会嗅探容器格式写进日志，遇到 macOS 播不了的 Ogg 会提醒。
 
@@ -32,28 +32,35 @@ make install
 |---|---|
 | API Key | 密文输入，只发给下方 API 地址 |
 | API 地址 | 默认 `https://ai-gateway.vercel.sh`，一般不用改。走代理可填基础地址或完整的 `/v4/ai/speech-model`；远程地址必须 HTTPS（仅 `localhost` / `127.x` / `[::1]` 可用 HTTP） |
-| 模型 | 默认 OpenAI TTS-1（快、便宜，适合划词朗读）。八个模型见下表 |
+| 模型 | 默认 OpenAI TTS-1（快、便宜，适合划词朗读）。全部 13 个模型见下表 |
 | 自定义模型 ID | 填了就优先生效，用于菜单里还没有的模型（例如 `fish-audio/s2.1-pro-free`） |
-| 音色 · OpenAI / Gemini / Grok / Fish Audio | 四个家族各一个菜单。Bob 的设置项是静态显示的，四个菜单会同时出现，插件只读当前模型家族那一个 |
-| 自定义音色 | 填了就优先生效，覆盖所有音色菜单。OpenAI / Grok 填音色名，Gemini 填 `Kore` 这类名称，Fish Audio 填 32 位 reference ID |
-| 音频格式 | 默认「自动」：OpenAI / Grok / Fish Audio 用 mp3，Gemini 用 wav。也可强制 mp3 / wav（Gemini 选 mp3 会被改成 wav） |
-| 语速 | 仅在非 1.0 时发送；OpenAI 与 Grok 支持，Gemini 与 Fish Audio 不支持（插件不发送） |
-| 语音指令 | 控制语气 / 情绪 / 节奏，不会被朗读。Gemini 支持；OpenAI tts-1 / tts-1-hd、Grok、Fish Audio 不支持（插件不发送）。Grok 与 Fish Audio 可直接在待朗读文本里写行内标签 |
+| 音色 · OpenAI / Gemini / Microsoft MAI / Grok / Fish Audio | 五个家族各一个菜单。Bob 的设置项是静态显示的，五个菜单会同时出现，插件只读当前模型家族那一个 |
+| 自定义音色 | 填了就优先生效，覆盖所有音色菜单。OpenAI / Grok 填音色名，Gemini 填 `Kore` 这类名称，Microsoft 填 `en-US-Harper` 这类 ID，Fish Audio 填 32 位 reference ID |
+| 音频格式 | 默认「自动」：OpenAI / Microsoft / Grok / Fish Audio 用 mp3，Gemini 用 wav。也可强制 mp3 / wav（Gemini 选 mp3 会被改成 wav） |
+| 语速 | 仅在非 1.0 时发送；OpenAI、Microsoft MAI 与 Grok 支持，Gemini 与 Fish Audio 不支持（插件不发送） |
+| 语音指令 | 控制语气 / 情绪 / 节奏，不会被朗读。Gemini 支持；OpenAI tts-1 / tts-1-hd、Microsoft MAI、Grok、Fish Audio 不支持（插件不发送）。Grok 与 Fish Audio 可直接在待朗读文本里写行内标签 |
 
 ## 模型与音色
 
-| 模型 | Gateway ID | 音色菜单 | 自动格式 | 语速 | 指令 | 价格（2026-09-25 目录） |
+| 模型 | Gateway ID | 音色菜单 | 自动格式 | 语速 | 指令 | 价格（2026-10-18 目录） |
 |---|---|---|---|---|---|---|
 | OpenAI TTS-1 | `openai/tts-1` | 音色 · OpenAI（9 个） | mp3 | ✓ | ✗ | $15 / 百万字符 |
 | OpenAI TTS-1 HD | `openai/tts-1-hd` | 音色 · OpenAI | mp3 | ✓ | ✗ | $30 / 百万字符 |
 | Gemini 3.8 Flash TTS | `google/gemini-3.8-flash-tts` | 音色 · Gemini（30 个） | wav | ✗ | ✓ | 输入 $0.5 + 音频输出 $9 / 百万 token |
 | Gemini 3.8 Flash-Lite TTS | `google/gemini-3.8-flash-lite-tts` | 音色 · Gemini | wav | ✗ | ✓ | 输入 $0.5 + 音频输出 $6 / 百万 token |
+| Microsoft MAI-Voice 2.1 Flash | `microsoft/mai-voice-2.1-flash` | 音色 · Microsoft MAI（28 个 + 自动） | mp3 | ✓ | ✗ | $15 / 百万字符 |
+| Microsoft MAI-Voice 2.1 | `microsoft/mai-voice-2.1` | 音色 · Microsoft MAI | mp3 | ✓ | ✗ | $22 / 百万字符 |
+| Microsoft MAI-Voice 2 Flash | `microsoft/mai-voice-2-flash` | 音色 · Microsoft MAI | mp3 | ✓ | ✗ | $15 / 百万字符 |
+| Microsoft MAI-Voice 2 | `microsoft/mai-voice-2` | 音色 · Microsoft MAI | mp3 | ✓ | ✗ | $22 / 百万字符 |
 | Grok TTS | `spacexai/grok-tts` | 音色 · Grok（5 个） | mp3 | ✓（0.7~1.5） | ✗，用文本里的行内标签 | $15 / 百万字符 |
+| Fish Audio Drama 3 | `fish-audio/drama-3` | 音色 · Fish Audio | mp3 | ✗ | ✗，支持 `[语气]` 与 `<whisper>` 行内标签 | $10 / 百万字符 |
 | Fish Audio S2.1 Pro | `fish-audio/s2.1-pro` | 音色 · Fish Audio | mp3 | ✗ | ✗，S2 系列用行内标签 | $15 / 百万字符 |
 | Fish Audio S2 Pro | `fish-audio/s2-pro` | 音色 · Fish Audio | mp3 | ✗ | ✗ | $15 / 百万字符 |
 | Fish Audio S1 | `fish-audio/s1` | 音色 · Fish Audio | mp3 | ✗ | ✗，用情绪 / 音效标记 | $15 / 百万字符 |
 
-家族按模型 ID 识别：`openai/` → OpenAI；`google/` 或含 `gemini` → Gemini；`spacexai/`、`xai/` 或含 `grok` → Grok；`fish-audio/` 或含 `fish` → Fish Audio；其余视为自定义家族——不发 voice 与 outputFormat（除非你在自定义音色 / 音频格式里明确填了），speed 与 instructions 照发，让网关的 warnings 说话。
+家族按模型 ID 识别：`openai/` → OpenAI；`google/` 或含 `gemini` → Gemini；`microsoft/` 或含 `mai-voice` → Microsoft MAI；`spacexai/`、`xai/` 或含 `grok` → Grok；`fish-audio/` 或含 `fish` → Fish Audio；其余视为自定义家族——不发 voice 与 outputFormat（除非你在自定义音色 / 音频格式里明确填了），speed 与 instructions 照发，让网关的 warnings 说话。
+
+Microsoft MAI 选「按语言自动选音色（默认）」时不发 `voice`，插件会把 Bob 检测到的语种映射成网关支持的 `language`（zh / en / de / es / fr / hi / hu / it / ko / nl / pt / ro / ru / th / tr），由网关自动挑选对应语种的默认音色（如中文 `zh-CN-Mei`、英文 `en-US-Harper`）；如果在菜单或自定义音色里显式指定了具体音色（如 `zh-CN-Bo`），则不再发 `language`，避免语种冲突告警。
 
 Fish Audio 选「默认音色」时不发送 voice，由 Fish Audio 决定；其他音色到 [fish.audio](https://fish.audio/app/discovery) 音色页点 **Copy Model Id**，把 reference ID 填到「自定义音色」。菜单里预置的两个中文音色沿用自 OpenRouter TTS 插件。
 
@@ -70,7 +77,7 @@ Grok 只在 Bob 语言能映射到其 `language` 列表（zh / en / ja / ko / fr
 | AI Gateway 额度不足或超出预算 | HTTP 402 或错误码含 credit / budget：去 AI Gateway 控制台充值或调整 Key 预算 |
 | 请求被网关拒绝 | HTTP 400 / 422，后面会带网关原文，常见是音色名不属于当前模型 |
 | 请求过于频繁或超出速率限制 | HTTP 429 |
-| 文本长度 N 超过 xxx 的单次上限 | 各家族上限不同（OpenAI 4096、Gemini / Fish Audio 8000、Grok 15000），分段朗读即可 |
+| 文本长度 N 超过 xxx 的单次上限 | 各家族上限不同（OpenAI 4096、Gemini / Microsoft / Fish Audio 8000、Grok 15000），分段朗读即可 |
 | AI Gateway 返回的不是 JSON / 响应里没有 audio 字段 | 2xx 但响应形态不对，通常是代理或网关改动；日志里有响应片段 |
 
 报错弹窗里的链接是纯文本，插件已把地址明文写进提示。排查时看 Bob 日志：

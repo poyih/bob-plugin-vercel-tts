@@ -167,6 +167,7 @@ var BASE_OPTIONS = {
     customModel: "",
     voiceOpenai: "alloy",
     voiceGoogle: "Kore",
+    voiceMicrosoft: "default",
     voiceGrok: "eve",
     voiceFish: "default",
     customVoice: "",
@@ -293,17 +294,59 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     await speak(EN);
     ok(lastRequest.body.voice === "eve", "旧前缀 xai/ 也识别为 Grok 家族");
 
-    // 7. Fish Audio：默认不发 voice；菜单 reference ID；不发 speed
+    // 7. Fish Audio（含 Drama 3）：默认不发 voice；菜单 reference ID；不发 speed / instructions
     withOptions({ model: "fish-audio/s2.1-pro", speed: "1.5" });
     nextResponse = audioResponse();
     await speak(EN);
     ok(lastRequest.body.voice === undefined && lastRequest.body.outputFormat === "mp3",
         "Fish Audio 默认音色不发 voice，格式 mp3");
     ok(lastRequest.body.speed === undefined, "Fish Audio 不发 speed");
+    withOptions({ model: "fish-audio/drama-3", speed: "1.25", instructions: "sad" });
+    nextResponse = audioResponse();
+    logs = [];
+    await speak(EN);
+    ok(lastRequest.header["ai-model-id"] === "fish-audio/drama-3" &&
+        lastRequest.body.voice === undefined &&
+        lastRequest.body.outputFormat === "mp3" &&
+        lastRequest.body.speed === undefined &&
+        lastRequest.body.instructions === undefined &&
+        loggedLine("speed,instructions"),
+        "Fish Audio Drama 3 识别为 fish 家族并门控 speed / instructions");
     withOptions({ model: "fish-audio/s1", voiceFish: "7f92f8afb8ec43bf81429cc1c9199cb1" });
     nextResponse = audioResponse();
     await speak(EN);
     ok(lastRequest.body.voice === "7f92f8afb8ec43bf81429cc1c9199cb1", "Fish Audio 菜单里的 reference ID 作为 voice");
+
+    // 7b. Microsoft MAI-Voice 家族：默认按语言自动选音色（发 language 不发 voice）；显式选音色则发 voice 不发 language
+    withOptions({ model: "microsoft/mai-voice-2.1-flash", speed: "1.25", instructions: "cheerful" });
+    nextResponse = audioResponse();
+    logs = [];
+    await speak({ text: "你好世界", lang: "zh-Hans" });
+    ok(lastRequest.header["ai-model-id"] === "microsoft/mai-voice-2.1-flash", "Microsoft 模型写进 ai-model-id");
+    ok(lastRequest.body.voice === undefined && lastRequest.body.language === "zh",
+        "Microsoft 默认按语言自动选音色：zh-Hans 不发 voice、发送 language=zh");
+    ok(lastRequest.body.outputFormat === "mp3" && lastRequest.body.speed === 1.25,
+        "Microsoft 自动格式为 mp3 并放行 speed");
+    ok(lastRequest.body.instructions === undefined && loggedLine("instructions"),
+        "Microsoft 不发 instructions 并写日志");
+
+    nextResponse = audioResponse();
+    await speak({ text: "こんにちは", lang: "ja" });
+    ok(lastRequest.body.voice === undefined && lastRequest.body.language === undefined,
+        "Microsoft 默认列表外的语言不发 language（避免告警）");
+
+    withOptions({ model: "microsoft/mai-voice-2.1", voiceMicrosoft: "zh-CN-Bo" });
+    nextResponse = audioResponse();
+    await speak(EN);
+    ok(lastRequest.body.voice === "zh-CN-Bo" && lastRequest.body.language === undefined,
+        "Microsoft 显式选定音色时只发 voice、不发冲突的 language");
+
+    withOptions({ model: "microsoft/mai-voice-2", outputFormat: "flac" });
+    nextResponse = audioResponse();
+    logs = [];
+    await speak(EN);
+    ok(lastRequest.body.outputFormat === "mp3" && loggedLine("Microsoft MAI 不支持 flac，改用 mp3"),
+        "Microsoft 选不支持的格式时退回 mp3 并写日志");
 
     // 8. 自定义模型 / 自定义音色优先
     withOptions({ customModel: "  fish-audio/s2.1-pro-free  ", customVoice: "  abc123  " });
@@ -386,6 +429,9 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     withOptions({ apiUrl: "http://proxy.example.com" });
     r = await speak(EN);
     ok(r.error && r.error.type === "param" && r.error.message.indexOf("HTTPS") > 0, "远程 HTTP 地址被拒绝");
+    withOptions({ apiUrl: "http://127.999.0.1:8787" });
+    r = await speak(EN);
+    ok(r.error && r.error.type === "param", "越界 IPv4 段 127.999.0.1 不当作本机回环放行");
     withOptions({ apiUrl: "https://proxy.example.com/v4?x=1" });
     r = await speak(EN);
     ok(r.error && r.error.type === "param", "带 query 的地址被拒绝");

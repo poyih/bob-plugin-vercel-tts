@@ -10,14 +10,15 @@ var DEFAULT_API_BASE = "https://ai-gateway.vercel.sh";
 var SPEECH_PATH = "/v4/ai/speech-model";
 var DEFAULT_MODEL = "openai/tts-1";
 
-// 音色菜单里代表「不发送 voice、用提供方默认音色」的哨兵值（Fish Audio 用）
+// 音色菜单里代表「不发送 voice、用提供方默认音色或按语言自动选音色」的哨兵值（Microsoft / Fish Audio 用）
 var PROVIDER_DEFAULT_VOICE = "default";
 
-// 各模型家族的能力（2026-09-25 依据 Vercel 文档与各家 API 文档整理）。
+// 各模型家族的能力（2026-10-18 依据 Vercel 文档与各家 API 文档整理）。
 //
-// 网关对不支持的选项通常只在响应 warnings 里报告而不报错，但有两处不能赌：
+// 网关对不支持的选项通常只在响应 warnings 里报告而不报错，但有几处不能赌：
 //   - instructions 发给 OpenAI tts-1 / tts-1-hd 会被上游拒绝（仅 gpt-* 系列支持）
 //   - language 发给 Grok 时必须在其列表内，否则 400
+//   - Microsoft MAI-Voice 同时传具体 voice 与不一致的 language，或传列表外的 language 会产生告警并回退英文
 // 所以插件按家族门控，只发确实支持的字段，其余丢弃并写日志。
 //
 //   voiceOption    info.json 里对应的音色菜单
@@ -50,6 +51,18 @@ var FAMILIES = {
         speed: false,
         instructions: true,
         language: false,
+        charLimit: 8000
+    },
+    microsoft: {
+        label: "Microsoft MAI",
+        voiceOption: "voiceMicrosoft",
+        defaultVoice: PROVIDER_DEFAULT_VOICE,
+        // MAI-Voice 默认返回 24kHz MP3，支持 mp3 / wav / pcm / opus；支持 speed，不支持 instructions
+        defaultFormat: "mp3",
+        formats: ["mp3", "wav", "pcm", "opus"],
+        speed: true,
+        instructions: false,
+        language: true,
         charLimit: 8000
     },
     grok: {
@@ -97,6 +110,9 @@ function getModelFamily(model) {
     }
     if (value.indexOf("google/") === 0 || value.indexOf("gemini") !== -1) {
         return "google";
+    }
+    if (value.indexOf("microsoft/") === 0 || value.indexOf("mai-voice") !== -1) {
+        return "microsoft";
     }
     if (value.indexOf("spacexai/") === 0 || value.indexOf("xai/") === 0 || value.indexOf("grok") !== -1) {
         return "grok";
@@ -253,17 +269,50 @@ var GROK_LANGUAGE_BY_BOB = {
     "es": "es-ES"
 };
 
+// Microsoft MAI-Voice 在不传 voice 时靠 language 自动挑对应语种的默认音色
+// （AI SDK Azure 文档：de, en, es, fr, hi, hu, it, ko, nl, pt, ro, ru, th, tr, zh；
+// 其余语言若传了会产生告警并回退 en-US-Harper，因此仅对这 15 种语言发 language）。
+var MICROSOFT_LANGUAGE_BY_BOB = {
+    "zh-Hans": "zh",
+    "zh-Hant": "zh",
+    "yue": "zh",
+    "wyw": "zh",
+    "en": "en",
+    "de": "de",
+    "es": "es",
+    "fr": "fr",
+    "hi": "hi",
+    "hu": "hu",
+    "it": "it",
+    "ko": "ko",
+    "nl": "nl",
+    "pt": "pt",
+    "pt-pt": "pt",
+    "pt-br": "pt",
+    "ro": "ro",
+    "ru": "ru",
+    "th": "th",
+    "tr": "tr"
+};
+
 var langMap = new Map(LANGUAGES.map(function (item) {
     return [item[0], item[1]];
 }));
 
 // 该家族应发送的 language 值；空字符串表示不发送。
-function languageParam(family, bobLang) {
+// Microsoft MAI-Voice 的音色名自带地区（如 zh-CN-Mei），一旦显式指定了 voice 就不再发 language，避免冲突告警。
+function languageParam(family, bobLang, voiceId) {
     if (!familyInfo(family).language) {
         return "";
     }
     if (family === "grok") {
         return GROK_LANGUAGE_BY_BOB[bobLang] || "";
+    }
+    if (family === "microsoft") {
+        if (voiceId) {
+            return "";
+        }
+        return MICROSOFT_LANGUAGE_BY_BOB[bobLang] || "";
     }
     return langMap.get(bobLang) || "";
 }
@@ -275,6 +324,7 @@ exports.PROVIDER_DEFAULT_VOICE = PROVIDER_DEFAULT_VOICE;
 exports.FAMILIES = FAMILIES;
 exports.LANGUAGES = LANGUAGES;
 exports.GROK_LANGUAGE_BY_BOB = GROK_LANGUAGE_BY_BOB;
+exports.MICROSOFT_LANGUAGE_BY_BOB = MICROSOFT_LANGUAGE_BY_BOB;
 exports.langMap = langMap;
 exports.getModelFamily = getModelFamily;
 exports.familyInfo = familyInfo;

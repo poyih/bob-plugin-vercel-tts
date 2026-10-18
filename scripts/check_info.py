@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
-"""校验 src/info.json：字段格式、菜单默认值在菜单里、选项 identifier 与 JS 里读取的一致。
+"""校验 src/info.json：字段格式、菜单默认值在菜单里、选项 identifier 与 JS 里读取的一致、
+内置模型菜单全部能被 config.getModelFamily 识别为已知家族。
 
 用法：python3 scripts/check_info.py（make lint 会自动跑）
 """
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src"
+JSC = "/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc"
 
 
 def main() -> int:
@@ -34,6 +37,7 @@ def main() -> int:
     if len(ids) != len(set(ids)):
         problems.append("options 里有重复的 identifier")
 
+    model_values: list[str] = []
     for option in options:
         ident = option.get("identifier", "?")
         for field in ("identifier", "type", "title"):
@@ -42,6 +46,8 @@ def main() -> int:
         kind = option.get("type")
         if kind == "menu":
             values = [m.get("value") for m in option.get("menuValues", [])]
+            if ident == "model":
+                model_values = [v for v in values if isinstance(v, str)]
             if not values:
                 problems.append(f"{ident}: menu 没有 menuValues")
             if len(values) != len(set(values)):
@@ -68,11 +74,21 @@ def main() -> int:
     for name in sorted(set(ids) - used):
         problems.append(f"info.json 的选项 {name} 在 JS 里从未被读取")
 
+    if model_values and Path(JSC).is_file():
+        expr = (
+            "globalThis.exports={}; load('src/config.js'); var c=globalThis.exports; "
+            f"var ms={json.dumps(model_values)}; "
+            "for (var i=0;i<ms.length;i++){ var f=c.getModelFamily(ms[i]); if (f==='custom') print(ms[i]); }"
+        )
+        out = subprocess.check_output([JSC, "-e", expr], cwd=ROOT, text=True).strip()
+        for unknown in [line for line in out.splitlines() if line.strip()]:
+            problems.append(f"model 菜单里的 {unknown} 未在 src/config.js 中配置家族（被归入 custom）")
+
     if problems:
         for line in problems:
             print("info FAIL  " + line)
         return 1
-    print(f"info ok    src/info.json ({len(ids)} options)")
+    print(f"info ok    src/info.json ({len(ids)} options, {len(model_values)} models)")
     return 0
 
 

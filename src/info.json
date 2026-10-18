@@ -1,9 +1,9 @@
 {
     "identifier": "com.poyih.bob.plugin.vercel.tts",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "category": "tts",
     "name": "Vercel AI Gateway 语音合成",
-    "summary": "通过 Vercel AI Gateway 一个 Key 调用 OpenAI、Gemini、Grok、Fish Audio 的 TTS 模型朗读文本。",
+    "summary": "通过 Vercel AI Gateway 一个 Key 调用 OpenAI、Gemini、Microsoft MAI、Grok、Fish Audio 的 TTS 模型朗读文本。",
     "icon": "icon.png",
     "author": "poyih & Claude",
     "homepage": "https://github.com/poyih/bob-plugin-vercel-tts",
@@ -37,16 +37,60 @@
             "type": "menu",
             "title": "模型",
             "defaultValue": "openai/tts-1",
-            "desc": "AI Gateway 目录里 type=speech 的全部模型（2026-09-25）。OpenAI / Grok / Fish Audio 按字符计费 $15/百万（TTS-1 HD $30）；Gemini 按 token：输入 $0.5/百万 + 音频输出 $6~9/百万。语音合成在网关上仍是 beta，个别团队可能尚未开放。",
+            "desc": "AI Gateway 目录里 type=speech 的全部 13 个模型（2026-10-18）。OpenAI / Microsoft / Grok / Fish Audio 按字符计费 $10~$30/百万；Gemini 按 token：输入 $0.5/百万 + 音频输出 $6~9/百万。语音合成在网关上仍是 beta，个别团队可能尚未开放。",
             "menuValues": [
-                { "title": "OpenAI TTS-1 — 快、便宜，推荐划词朗读", "value": "openai/tts-1" },
-                { "title": "OpenAI TTS-1 HD — 音质更高，价格翻倍", "value": "openai/tts-1-hd" },
-                { "title": "Gemini 3.8 Flash TTS — 表现力强、100+ 语言、可用语音指令", "value": "google/gemini-3.8-flash-tts" },
-                { "title": "Gemini 3.8 Flash-Lite TTS — 更省、更快的 Gemini", "value": "google/gemini-3.8-flash-lite-tts" },
-                { "title": "Grok TTS (xAI) — 5 个音色，支持语速与指定语言", "value": "spacexai/grok-tts" },
-                { "title": "Fish Audio S2.1 Pro — 83 语言，可用 fish.audio 音色库", "value": "fish-audio/s2.1-pro" },
-                { "title": "Fish Audio S2 Pro — 支持行内标签控制语气", "value": "fish-audio/s2-pro" },
-                { "title": "Fish Audio S1 — 支持情绪 / 音效标记", "value": "fish-audio/s1" }
+                {
+                    "title": "OpenAI TTS-1 — 快、便宜，推荐划词朗读 ($15/M)",
+                    "value": "openai/tts-1"
+                },
+                {
+                    "title": "OpenAI TTS-1 HD — 音质更高，价格翻倍 ($30/M)",
+                    "value": "openai/tts-1-hd"
+                },
+                {
+                    "title": "Gemini 3.8 Flash TTS — 表现力强、130 语言、可用语音指令",
+                    "value": "google/gemini-3.8-flash-tts"
+                },
+                {
+                    "title": "Gemini 3.8 Flash-Lite TTS — 更省、更快的 Gemini",
+                    "value": "google/gemini-3.8-flash-lite-tts"
+                },
+                {
+                    "title": "Microsoft MAI-Voice 2.1 Flash — 23 语言低延迟，支持按语种自动选音色 ($15/M)",
+                    "value": "microsoft/mai-voice-2.1-flash"
+                },
+                {
+                    "title": "Microsoft MAI-Voice 2.1 — 高保真、强表现力，适合长文朗读 ($22/M)",
+                    "value": "microsoft/mai-voice-2.1"
+                },
+                {
+                    "title": "Microsoft MAI-Voice 2 Flash — 低延迟语音合成 ($15/M)",
+                    "value": "microsoft/mai-voice-2-flash"
+                },
+                {
+                    "title": "Microsoft MAI-Voice 2 — 高保真语音合成 ($22/M)",
+                    "value": "microsoft/mai-voice-2"
+                },
+                {
+                    "title": "Grok TTS (xAI) — 5 个音色，支持语速与指定语言 ($15/M)",
+                    "value": "spacexai/grok-tts"
+                },
+                {
+                    "title": "Fish Audio Drama 3 — 导演级表现力，支持 [语气] 与 <whisper> 行内标签 ($10/M)",
+                    "value": "fish-audio/drama-3"
+                },
+                {
+                    "title": "Fish Audio S2.1 Pro — 83 语言，可用 fish.audio 音色库 ($15/M)",
+                    "value": "fish-audio/s2.1-pro"
+                },
+                {
+                    "title": "Fish Audio S2 Pro — 支持行内标签控制语气 ($15/M)",
+                    "value": "fish-audio/s2-pro"
+                },
+                {
+                    "title": "Fish Audio S1 — 支持情绪 / 音效标记 ($15/M)",
+                    "value": "fish-audio/s1"
+                }
             ]
         },
         {
@@ -58,7 +102,7 @@
                 "type": "visible",
                 "placeholderText": "留空则使用上面选中的模型，例如 fish-audio/s2.1-pro-free"
             },
-            "desc": "填了就优先生效，用于菜单里还没有的新模型。插件按 ID 前缀识别家族（openai/、google/、spacexai/、fish-audio/）来决定读哪个音色菜单和默认音频格式；识别不出的模型请在下方填自定义音色。"
+            "desc": "填了就优先生效，用于菜单里还没有的新模型。插件按 ID 前缀识别家族（openai/、google/、microsoft/、spacexai/、fish-audio/）来决定读哪个音色菜单和默认音频格式；识别不出的模型请在下方填自定义音色。"
         },
         {
             "identifier": "voiceOpenai",
@@ -67,15 +111,42 @@
             "defaultValue": "alloy",
             "desc": "用于 openai/tts-1 与 openai/tts-1-hd。",
             "menuValues": [
-                { "title": "alloy — 中性、均衡（默认）", "value": "alloy" },
-                { "title": "ash — 沉稳男声", "value": "ash" },
-                { "title": "coral — 明亮女声", "value": "coral" },
-                { "title": "echo — 低沉男声", "value": "echo" },
-                { "title": "fable — 英式口音、叙事感", "value": "fable" },
-                { "title": "onyx — 深沉有力的男声", "value": "onyx" },
-                { "title": "nova — 活力女声", "value": "nova" },
-                { "title": "sage — 柔和平静", "value": "sage" },
-                { "title": "shimmer — 清亮女声", "value": "shimmer" }
+                {
+                    "title": "alloy — 中性、均衡（默认）",
+                    "value": "alloy"
+                },
+                {
+                    "title": "ash — 沉稳男声",
+                    "value": "ash"
+                },
+                {
+                    "title": "coral — 明亮女声",
+                    "value": "coral"
+                },
+                {
+                    "title": "echo — 低沉男声",
+                    "value": "echo"
+                },
+                {
+                    "title": "fable — 英式口音、叙事感",
+                    "value": "fable"
+                },
+                {
+                    "title": "onyx — 深沉有力的男声",
+                    "value": "onyx"
+                },
+                {
+                    "title": "nova — 活力女声",
+                    "value": "nova"
+                },
+                {
+                    "title": "sage — 柔和平静",
+                    "value": "sage"
+                },
+                {
+                    "title": "shimmer — 清亮女声",
+                    "value": "shimmer"
+                }
             ]
         },
         {
@@ -85,36 +156,251 @@
             "defaultValue": "Kore",
             "desc": "用于 google/gemini-*-tts。名称区分大小写。",
             "menuValues": [
-                { "title": "Zephyr - Bright (明亮)", "value": "Zephyr" },
-                { "title": "Puck - Upbeat (欢快)", "value": "Puck" },
-                { "title": "Charon - Informative (信息型)", "value": "Charon" },
-                { "title": "Kore - Firm (沉稳)", "value": "Kore" },
-                { "title": "Fenrir - Excitable (活泼)", "value": "Fenrir" },
-                { "title": "Leda - Youthful (年轻)", "value": "Leda" },
-                { "title": "Orus - Firm (沉稳)", "value": "Orus" },
-                { "title": "Aoede - Breezy (轻快)", "value": "Aoede" },
-                { "title": "Callirrhoe - Easy-going (随和)", "value": "Callirrhoe" },
-                { "title": "Autonoe - Bright (明亮)", "value": "Autonoe" },
-                { "title": "Enceladus - Breathy (气声)", "value": "Enceladus" },
-                { "title": "Iapetus - Clear (清晰)", "value": "Iapetus" },
-                { "title": "Umbriel - Easy-going (随和)", "value": "Umbriel" },
-                { "title": "Algieba - Smooth (柔滑)", "value": "Algieba" },
-                { "title": "Despina - Smooth (柔滑)", "value": "Despina" },
-                { "title": "Erinome - Clear (清晰)", "value": "Erinome" },
-                { "title": "Algenib - Gravelly (沙哑)", "value": "Algenib" },
-                { "title": "Rasalgethi - Informative (信息型)", "value": "Rasalgethi" },
-                { "title": "Laomedeia - Upbeat (欢快)", "value": "Laomedeia" },
-                { "title": "Achernar - Soft (柔和)", "value": "Achernar" },
-                { "title": "Alnilam - Firm (沉稳)", "value": "Alnilam" },
-                { "title": "Schedar - Even (平稳)", "value": "Schedar" },
-                { "title": "Gacrux - Mature (成熟)", "value": "Gacrux" },
-                { "title": "Pulcherrima - Forward (直率)", "value": "Pulcherrima" },
-                { "title": "Achird - Friendly (友好)", "value": "Achird" },
-                { "title": "Zubenelgenubi - Casual (休闲)", "value": "Zubenelgenubi" },
-                { "title": "Vindemiatrix - Gentle (温柔)", "value": "Vindemiatrix" },
-                { "title": "Sadachbia - Lively (生动)", "value": "Sadachbia" },
-                { "title": "Sadaltager - Knowledgeable (博学)", "value": "Sadaltager" },
-                { "title": "Sulafat - Warm (温暖)", "value": "Sulafat" }
+                {
+                    "title": "Zephyr - Bright (明亮)",
+                    "value": "Zephyr"
+                },
+                {
+                    "title": "Puck - Upbeat (欢快)",
+                    "value": "Puck"
+                },
+                {
+                    "title": "Charon - Informative (信息型)",
+                    "value": "Charon"
+                },
+                {
+                    "title": "Kore - Firm (沉稳)",
+                    "value": "Kore"
+                },
+                {
+                    "title": "Fenrir - Excitable (活泼)",
+                    "value": "Fenrir"
+                },
+                {
+                    "title": "Leda - Youthful (年轻)",
+                    "value": "Leda"
+                },
+                {
+                    "title": "Orus - Firm (沉稳)",
+                    "value": "Orus"
+                },
+                {
+                    "title": "Aoede - Breezy (轻快)",
+                    "value": "Aoede"
+                },
+                {
+                    "title": "Callirrhoe - Easy-going (随和)",
+                    "value": "Callirrhoe"
+                },
+                {
+                    "title": "Autonoe - Bright (明亮)",
+                    "value": "Autonoe"
+                },
+                {
+                    "title": "Enceladus - Breathy (气声)",
+                    "value": "Enceladus"
+                },
+                {
+                    "title": "Iapetus - Clear (清晰)",
+                    "value": "Iapetus"
+                },
+                {
+                    "title": "Umbriel - Easy-going (随和)",
+                    "value": "Umbriel"
+                },
+                {
+                    "title": "Algieba - Smooth (柔滑)",
+                    "value": "Algieba"
+                },
+                {
+                    "title": "Despina - Smooth (柔滑)",
+                    "value": "Despina"
+                },
+                {
+                    "title": "Erinome - Clear (清晰)",
+                    "value": "Erinome"
+                },
+                {
+                    "title": "Algenib - Gravelly (沙哑)",
+                    "value": "Algenib"
+                },
+                {
+                    "title": "Rasalgethi - Informative (信息型)",
+                    "value": "Rasalgethi"
+                },
+                {
+                    "title": "Laomedeia - Upbeat (欢快)",
+                    "value": "Laomedeia"
+                },
+                {
+                    "title": "Achernar - Soft (柔和)",
+                    "value": "Achernar"
+                },
+                {
+                    "title": "Alnilam - Firm (沉稳)",
+                    "value": "Alnilam"
+                },
+                {
+                    "title": "Schedar - Even (平稳)",
+                    "value": "Schedar"
+                },
+                {
+                    "title": "Gacrux - Mature (成熟)",
+                    "value": "Gacrux"
+                },
+                {
+                    "title": "Pulcherrima - Forward (直率)",
+                    "value": "Pulcherrima"
+                },
+                {
+                    "title": "Achird - Friendly (友好)",
+                    "value": "Achird"
+                },
+                {
+                    "title": "Zubenelgenubi - Casual (休闲)",
+                    "value": "Zubenelgenubi"
+                },
+                {
+                    "title": "Vindemiatrix - Gentle (温柔)",
+                    "value": "Vindemiatrix"
+                },
+                {
+                    "title": "Sadachbia - Lively (生动)",
+                    "value": "Sadachbia"
+                },
+                {
+                    "title": "Sadaltager - Knowledgeable (博学)",
+                    "value": "Sadaltager"
+                },
+                {
+                    "title": "Sulafat - Warm (温暖)",
+                    "value": "Sulafat"
+                }
+            ]
+        },
+        {
+            "identifier": "voiceMicrosoft",
+            "type": "menu",
+            "title": "音色 · Microsoft MAI",
+            "defaultValue": "default",
+            "desc": "用于 microsoft/mai-voice-*。选「按语言自动选音色」时不发送固定 voice，由网关根据语种自动挑默认音色（如中文 zh-CN-Mei、英文 en-US-Harper）；固定选某个音色则始终按该音色（及其地区语种）朗读。",
+            "menuValues": [
+                {
+                    "title": "按语言自动选音色（默认，中 Mei / 英 Harper 等）",
+                    "value": "default"
+                },
+                {
+                    "title": "zh-CN-Mei — 中文·女（情感丰富，中文默认）",
+                    "value": "zh-CN-Mei"
+                },
+                {
+                    "title": "zh-CN-Bo — 中文·男（情感丰富）",
+                    "value": "zh-CN-Bo"
+                },
+                {
+                    "title": "zh-CN-Lan — 中文·女（表现力强）",
+                    "value": "zh-CN-Lan"
+                },
+                {
+                    "title": "zh-CN-Wei — 中文·男（表现力强）",
+                    "value": "zh-CN-Wei"
+                },
+                {
+                    "title": "zh-CN-Harper — 中文·女（叙事 / 有声书）",
+                    "value": "zh-CN-Harper"
+                },
+                {
+                    "title": "zh-CN-Grant — 中文·男（叙事 / 有声书）",
+                    "value": "zh-CN-Grant"
+                },
+                {
+                    "title": "en-US-Harper — 美式英语·女（全能，英文默认）",
+                    "value": "en-US-Harper"
+                },
+                {
+                    "title": "en-US-Ethan — 美式英语·男（情感丰富）",
+                    "value": "en-US-Ethan"
+                },
+                {
+                    "title": "en-US-Olivia — 美式英语·女（情感丰富）",
+                    "value": "en-US-Olivia"
+                },
+                {
+                    "title": "en-US-Grant — 美式英语·男（叙事 / 有声书）",
+                    "value": "en-US-Grant"
+                },
+                {
+                    "title": "en-US-Iris — 美式英语·女（自然平稳）",
+                    "value": "en-US-Iris"
+                },
+                {
+                    "title": "en-US-Jasper — 美式英语·男（自然平稳）",
+                    "value": "en-US-Jasper"
+                },
+                {
+                    "title": "en-US-Sage — 美式英语·男（叙事 / 教学）",
+                    "value": "en-US-Sage"
+                },
+                {
+                    "title": "en-GB-Emily — 英式英语·女（表现力强）",
+                    "value": "en-GB-Emily"
+                },
+                {
+                    "title": "en-GB-Harry — 英式英语·男（表现力强）",
+                    "value": "en-GB-Harry"
+                },
+                {
+                    "title": "en-AU-Isla — 澳式英语·女（情感丰富）",
+                    "value": "en-AU-Isla"
+                },
+                {
+                    "title": "ko-KR-Haena — 韩语·女（Haena）",
+                    "value": "ko-KR-Haena"
+                },
+                {
+                    "title": "ko-KR-Junho — 韩语·男（Junho）",
+                    "value": "ko-KR-Junho"
+                },
+                {
+                    "title": "de-DE-Mia — 德语·女（Mia）",
+                    "value": "de-DE-Mia"
+                },
+                {
+                    "title": "fr-FR-Soleil — 法语·女（Soleil）",
+                    "value": "fr-FR-Soleil"
+                },
+                {
+                    "title": "es-MX-Valeria — 西班牙语·女（Valeria）",
+                    "value": "es-MX-Valeria"
+                },
+                {
+                    "title": "es-ES-Marta — 西班牙语（欧洲）·女（Marta）",
+                    "value": "es-ES-Marta"
+                },
+                {
+                    "title": "pt-BR-Luana — 葡萄牙语·女（Luana）",
+                    "value": "pt-BR-Luana"
+                },
+                {
+                    "title": "it-IT-Rosa — 意大利语·女（Rosa）",
+                    "value": "it-IT-Rosa"
+                },
+                {
+                    "title": "ru-RU-Masha — 俄语·女（Masha）",
+                    "value": "ru-RU-Masha"
+                },
+                {
+                    "title": "th-TH-Krit — 泰语·女（Krit）",
+                    "value": "th-TH-Krit"
+                },
+                {
+                    "title": "vi-VN-Harper — 越南语·女（Harper）",
+                    "value": "vi-VN-Harper"
+                },
+                {
+                    "title": "id-ID-Grant — 印尼语·男（Grant）",
+                    "value": "id-ID-Grant"
+                }
             ]
         },
         {
@@ -124,11 +410,26 @@
             "defaultValue": "eve",
             "desc": "用于 spacexai/grok-tts。",
             "menuValues": [
-                { "title": "eve — 女声，活力、明快（默认）", "value": "eve" },
-                { "title": "ara — 女声，温暖、亲切", "value": "ara" },
-                { "title": "rex — 男声，自信、清晰", "value": "rex" },
-                { "title": "sal — 中性，平顺、均衡", "value": "sal" },
-                { "title": "leo — 男声，有力、权威", "value": "leo" }
+                {
+                    "title": "eve — 女声，活力、明快（默认）",
+                    "value": "eve"
+                },
+                {
+                    "title": "ara — 女声，温暖、亲切",
+                    "value": "ara"
+                },
+                {
+                    "title": "rex — 男声，自信、清晰",
+                    "value": "rex"
+                },
+                {
+                    "title": "sal — 中性，平顺、均衡",
+                    "value": "sal"
+                },
+                {
+                    "title": "leo — 男声，有力、权威",
+                    "value": "leo"
+                }
             ]
         },
         {
@@ -138,9 +439,18 @@
             "defaultValue": "default",
             "desc": "用于 fish-audio/*。选「默认音色」时不发送 voice，由 Fish Audio 决定；其他音色到 fish.audio 音色页点 Copy Model Id，把 reference ID 填到下方自定义音色。",
             "menuValues": [
-                { "title": "默认音色（不发送 voice）", "value": "default" },
-                { "title": "AD学姐 — 中文·女（御姐·舒缓）", "value": "7f92f8afb8ec43bf81429cc1c9199cb1" },
-                { "title": "女大学生 — 中文·女（活泼·元气）", "value": "5c353fdb312f4888836a9a5680099ef0" }
+                {
+                    "title": "默认音色（不发送 voice）",
+                    "value": "default"
+                },
+                {
+                    "title": "AD学姐 — 中文·女（御姐·舒缓）",
+                    "value": "7f92f8afb8ec43bf81429cc1c9199cb1"
+                },
+                {
+                    "title": "女大学生 — 中文·女（活泼·元气）",
+                    "value": "5c353fdb312f4888836a9a5680099ef0"
+                }
             ]
         },
         {
@@ -152,18 +462,27 @@
                 "type": "visible",
                 "placeholderText": "留空则使用上面对应模型的音色菜单"
             },
-            "desc": "填了就优先生效，覆盖所有音色菜单。OpenAI / Grok 填音色名，Gemini 填 Kore 这类名称，Fish Audio 填 32 位 reference ID。"
+            "desc": "填了就优先生效，覆盖所有音色菜单。OpenAI / Grok 填音色名，Gemini 填 Kore 这类名称，Microsoft 填 en-US-Harper 这类 ID，Fish Audio 填 32 位 reference ID。"
         },
         {
             "identifier": "outputFormat",
             "type": "menu",
             "title": "音频格式",
             "defaultValue": "auto",
-            "desc": "自动：OpenAI / Grok / Fish Audio 用 mp3，Gemini 用 wav（Gemini 不支持 mp3，选了也会改成 wav）。",
+            "desc": "自动：OpenAI / Microsoft / Grok / Fish Audio 用 mp3，Gemini 用 wav（Gemini 不支持 mp3，选了也会改成 wav）。",
             "menuValues": [
-                { "title": "自动（按模型选择，推荐）", "value": "auto" },
-                { "title": "MP3", "value": "mp3" },
-                { "title": "WAV", "value": "wav" }
+                {
+                    "title": "自动（按模型选择，推荐）",
+                    "value": "auto"
+                },
+                {
+                    "title": "MP3",
+                    "value": "mp3"
+                },
+                {
+                    "title": "WAV",
+                    "value": "wav"
+                }
             ]
         },
         {
@@ -171,14 +490,32 @@
             "type": "menu",
             "title": "语速",
             "defaultValue": "1.0",
-            "desc": "仅在非 1.0 时发送。OpenAI 与 Grok 支持；Gemini 与 Fish Audio 不支持，插件不会发送——Gemini 可改用下方语音指令控制语速。",
+            "desc": "仅在非 1.0 时发送。OpenAI、Microsoft MAI 与 Grok 支持；Gemini 与 Fish Audio 不支持，插件不会发送——Gemini 可改用下方语音指令控制语速。",
             "menuValues": [
-                { "title": "0.75 倍 — 慢", "value": "0.75" },
-                { "title": "0.9 倍", "value": "0.9" },
-                { "title": "1.0 倍 — 正常", "value": "1.0" },
-                { "title": "1.1 倍", "value": "1.1" },
-                { "title": "1.25 倍", "value": "1.25" },
-                { "title": "1.5 倍 — 快", "value": "1.5" }
+                {
+                    "title": "0.75 倍 — 慢",
+                    "value": "0.75"
+                },
+                {
+                    "title": "0.9 倍",
+                    "value": "0.9"
+                },
+                {
+                    "title": "1.0 倍 — 正常",
+                    "value": "1.0"
+                },
+                {
+                    "title": "1.1 倍",
+                    "value": "1.1"
+                },
+                {
+                    "title": "1.25 倍",
+                    "value": "1.25"
+                },
+                {
+                    "title": "1.5 倍 — 快",
+                    "value": "1.5"
+                }
             ]
         },
         {
@@ -191,7 +528,7 @@
                 "height": 80,
                 "placeholderText": "例如：语气温和、语速稍慢，像在给朋友念一段话"
             },
-            "desc": "可选，控制语气 / 情绪 / 节奏，不会被朗读出来。Gemini 支持；OpenAI tts-1 / tts-1-hd、Grok、Fish Audio 不支持，插件不会发送。Grok 与 Fish Audio 可直接在待朗读文本里写行内标签。"
+            "desc": "可选，控制语气 / 情绪 / 节奏，不会被朗读出来。Gemini 支持；OpenAI tts-1 / tts-1-hd、Microsoft MAI、Grok、Fish Audio 不支持，插件不会发送。Grok 与 Fish Audio 可直接在待朗读文本里写行内标签。"
         }
     ]
 }

@@ -94,7 +94,13 @@ function isLoopbackHost(host) {
         return true;
     }
     var match = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(value);
-    return !!match && Number(match[1]) === 127;
+    if (!match) {
+        return false;
+    }
+    var octets = [Number(match[1]), Number(match[2]), Number(match[3]), Number(match[4])];
+    return octets[0] === 127 && octets.every(function (n) {
+        return n >= 0 && n <= 255;
+    });
 }
 
 // 用户可以填网关基础地址、代理地址，或者完整的 /v4/ai/speech-model 地址，
@@ -207,7 +213,7 @@ function buildRequest(text, lang) {
         }
     }
 
-    var language = config.languageParam(family, lang);
+    var language = config.languageParam(family, lang, voice.id);
     if (language) {
         body.language = language;
     }
