@@ -2,6 +2,14 @@
   "identifier": "com.poyih.bob.plugin.vercel.tts",
   "versions": [
     {
+      "version": "1.1.1",
+      "desc": "修复 Base64 校验与目录预览命令，启用 Fish Audio 语速，扩充 Grok 至 28 个音色，更新 CI",
+      "sha256": "3cb0ea5591c1638f8ad1707617927130abf4ed2d329a38ad44308b5c4d34a453",
+      "url": "https://github.com/poyih/bob-plugin-vercel-tts/releases/download/v1.1.1/bob-plugin-vercel-tts-1.1.1.bobplugin",
+      "minBobVersion": "1.8.0",
+      "timestamp": 1792323442910
+    },
+    {
       "version": "1.1.0",
       "desc": "新增 Microsoft MAI-Voice 家族 4 个模型（MAI-Voice 2.1 / 2.1 Flash / 2 / 2 Flash，支持按语言自动选音色与 28 个预置音色）与 Fish Audio Drama 3，同步网关全部 13 个 TTS 模型",
       "sha256": "b9aaf5fd686a6b4a52d66edae3f04e5d05b86dcfd00e8eb5d7fe54b1235e624a",
