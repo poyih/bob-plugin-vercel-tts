@@ -1,0 +1,42 @@
+name: Release
+
+# 手动运行：在 macOS 上跑完 make pack（含全部测试），按 src/info.json 的 version
+# 创建 v<version> Release 并上传 .bobplugin。之后还要把包登记进 appcast.json，见 README。
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: Release 说明（留空则只写版本号）
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    # jsc（JavaScriptCore）只有 macOS 有，make pack 会先用它跑测试
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - run: make pack
+      - name: 创建 Release 并上传插件包
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          version=$(python3 -c 'import json; print(json.load(open("src/info.json"))["version"])')
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::error::$tag 已存在，请先修改 src/info.json 的 version"
+            exit 1
+          fi
+          gh release create "$tag" dist/*.bobplugin --target "$GITHUB_SHA" --title "$tag" --notes "${NOTES:-$tag}"
+          echo "sha256: \`$(shasum -a 256 dist/*.bobplugin | cut -d' ' -f1)\`" >> "$GITHUB_STEP_SUMMARY"
