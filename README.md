@@ -100,6 +100,8 @@ make sync       # 从网关公开目录同步 TTS 模型菜单（不需要 Key�
 
 发版：改 `src/info.json` 的 `version` → `make pack` → 在 GitHub 创建 `v<version>` Release 并上传 `dist/*.bobplugin` → `make appcast DESC="..."` → 提交 `appcast.json`。Bob 靠 `appcast.json` 检查更新，下载地址默认指向 `https://github.com/poyih/bob-plugin-vercel-tts/releases/download/v<version>/<包名>`。
 
+也可以把改好 `version` 的提交合入 `main` 后，在 GitHub Actions 里手动运行 **Release** 工作流：它在 macOS 上跑完 `make pack`，创建 `v<version>` Release 并上传包。之后先把 Release 上的包下载到 `dist/`（`gh release download v<version> -D dist --clobber`）再 `make appcast`：本地重新打的包时间戳不同，sha256 会对不上。
+
 > 如果你的 GitHub 用户名不是 `poyih`，需要改：`src/info.json` 的 `homepage` / `appcast`、`scripts/update_appcast.py` 的 `DEFAULT_REPO`。
 
 ## 结构
