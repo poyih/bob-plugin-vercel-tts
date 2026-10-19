@@ -2,6 +2,14 @@
   "identifier": "com.poyih.bob.plugin.vercel.tts",
   "versions": [
     {
+      "version": "1.2.0",
+      "desc": "错误处理加固：非 2xx 响应带 error 时仍按状态码报出具体原因；Grok 音色标注 eve / leo 英式口音；新增 Release 发版工作流",
+      "sha256": "0155c8a2d1f4f294376672a7a2730006ae753479963f822baca6587b6a68678b",
+      "url": "https://github.com/poyih/bob-plugin-vercel-tts/releases/download/v1.2.0/bob-plugin-vercel-tts-1.2.0.bobplugin",
+      "minBobVersion": "1.8.0",
+      "timestamp": 1792396280836
+    },
+    {
       "version": "1.1.1",
       "desc": "修复 Base64 校验与目录预览命令，启用 Fish Audio 语速，扩充 Grok 至 28 个音色，更新 CI",
       "sha256": "3cb0ea5591c1638f8ad1707617927130abf4ed2d329a38ad44308b5c4d34a453",
