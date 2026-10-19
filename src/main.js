@@ -584,7 +584,12 @@ async function synthesize(text, lang, timeout) {
         timeout: timeout
     });
 
-    if (!resp || resp.error) {
+    // 必须查状态码：非 2xx 时响应体是 JSON 错误，不能当音频交出去。
+    // Bob 文档没说非 2xx 时会不会同时带上 error；带了也照样按状态码映射，
+    // 否则 Key 无效、额度不足都会被报成笼统的网络错误。
+    var statusCode = resp && resp.response ? Number(resp.response.statusCode) : 0;
+    var httpFailed = statusCode > 0 && (statusCode < 200 || statusCode >= 300);
+    if (!resp || (resp.error && !httpFailed)) {
         var networkError = resp && resp.error;
         throw {
             type: "network",
@@ -593,13 +598,10 @@ async function synthesize(text, lang, timeout) {
             addition: networkError
         };
     }
-
-    // 必须查状态码：非 2xx 时响应体是 JSON 错误，不能当音频交出去
-    var statusCode = resp.response ? Number(resp.response.statusCode) : 0;
     if (!statusCode) {
         throw { type: "network", message: "AI Gateway 请求没有收到有效的 HTTP 响应" };
     }
-    if (statusCode < 200 || statusCode >= 300) {
+    if (httpFailed) {
         var failure = toServiceError(statusCode, resp.data, req.model.id);
         logInfo("failed status=" + statusCode + " model=" + sanitize(req.model.id) + " type=" + failure.type);
         throw failure;

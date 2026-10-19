@@ -570,6 +570,16 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     nextResponse = { response: null, data: null };
     r = await speak(EN);
     ok(r.error && r.error.type === "network", "缺失 HTTP 响应时也映射为 network");
+    nextResponse = gatewayError(401, "bad key", "authentication_error");
+    nextResponse.error = { message: "Request failed: unauthorized (401)" };
+    r = await speak(EN);
+    ok(r.error && r.error.type === "secretKey" && r.error.message.indexOf("bad key") > 0,
+        "非 2xx 同时带 error 时仍按状态码映射");
+    nextResponse = audioResponse();
+    nextResponse.error = { message: "connection lost" };
+    r = await speak(EN);
+    ok(r.error && r.error.type === "network" && r.error.message.indexOf("connection lost") > 0,
+        "2xx 但带 error 时报 network");
     nextResponse = Promise.reject(null);
     r = await speak(EN);
     ok(r.error && r.error.type === "unknown", "运行时抛出 null 时也能稳定回传错误");
@@ -593,6 +603,11 @@ var SPEECH_URL = "https://ai-gateway.vercel.sh/v4/ai/speech-model";
     nextResponse = gatewayError(401, "bad key", "authentication_error");
     v = await validate();
     ok(v.result === false && v.error && v.error.type === "secretKey", "pluginValidate 在 401 时报 secretKey");
+    nextResponse = gatewayError(401, "bad key", "authentication_error");
+    nextResponse.error = { message: "Request failed: unauthorized (401)" };
+    v = await validate();
+    ok(v.result === false && v.error && v.error.type === "secretKey",
+        "pluginValidate 在 401 且带 error 时仍报 secretKey");
     nextResponse = textResponse(200, "<html>gateway</html>", "text/html");
     v = await validate();
     ok(v.result === false && v.error && v.error.type === "api", "pluginValidate 不把 2xx HTML 误判为可用");

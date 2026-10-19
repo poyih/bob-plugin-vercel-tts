@@ -1,6 +1,6 @@
 {
     "identifier": "com.poyih.bob.plugin.vercel.tts",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "category": "tts",
     "name": "Vercel AI Gateway 语音合成",
     "summary": "通过 Vercel AI Gateway 一个 Key 调用 OpenAI、Gemini、Microsoft MAI、Grok、Fish Audio 的 TTS 模型朗读文本。",
@@ -411,7 +411,7 @@
             "desc": "用于 spacexai/grok-tts，内置 28 个音色；均可朗读支持的语言。",
             "menuValues": [
                 {
-                    "title": "eve — 女声，活力、明快（默认）",
+                    "title": "eve — 女声，活力、明快（英式口音，默认）",
                     "value": "eve"
                 },
                 {
@@ -427,7 +427,7 @@
                     "value": "sal"
                 },
                 {
-                    "title": "leo — 男声，有力、权威",
+                    "title": "leo — 男声，有力、权威（英式口音）",
                     "value": "leo"
                 },
                 {
